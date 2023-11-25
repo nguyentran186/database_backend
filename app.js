@@ -1,5 +1,7 @@
 const express = require('express');
 const utils1 = require('./utils1');
+const utils2 = require('./utils2');
+const utils3 = require('./utils3');
 const utils4 = require('./utils4');
 
 
@@ -51,12 +53,12 @@ app.get('/ques1', async (req, res) => {
     res.json(res_)
 });
 
-app.get('/ques2', async (req, res) => {
+app.post('/ques2', async (req, res) => {
 
 })
 
 app.get('/ques3', async (req, res) => {
-    
+
 })
 
 app.get('/ques4', async (req, res) => {
