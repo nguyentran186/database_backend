@@ -38,7 +38,7 @@ const get_customer_category = async (customer_code) => {
                 reject(err);
             } else {
                 let categories = []
-                for (const cate in result){
+                for (const cate in result) {
                     categories.push(result[cate]['fabcat_code'])
                 }
                 resovled(categories);
@@ -92,14 +92,14 @@ const get_category_by_ID = async (fabcat_code) => {
                 resolve(result[0]);
             }
         })
-    }) 
+    })
 }
 
 const get_all_category = async (customer_code) => {
     return new Promise(async (resolve, reject) => {
         let categories = []
         let fab_list = await get_customer_category(customer_code);
-        for (index in fab_list){
+        for (index in fab_list) {
             let cate = await get_category_by_ID(fab_list[index]);
 
             category = {
@@ -110,7 +110,7 @@ const get_all_category = async (customer_code) => {
             categories.push(category)
         }
         resolve(categories)
-    }) 
+    })
 }
 
 const get_all_order = async (fabcat_code, customer_code) => {
@@ -134,12 +134,13 @@ const get_all_order = async (fabcat_code, customer_code) => {
         WHERE\
         fc.fabcat_code = ?\
         AND c.customer_code = ?";
-        db.query(name_query,[fabcat_code, customer_code],async (err, result) => {
+        db.query(name_query, [fabcat_code, customer_code], async (err, result) => {
             if (err) {
                 reject(err);
             } else {
                 let orders = []
-                for (index in result){
+                for (index in result) {
+                    let ops = await get_ops(result[index]['order_code'], result[index]['or_status'])
                     let order = {
                         'ID': result[index]['order_code'],
                         'boltID': result[index]['bolt_code'],
@@ -148,6 +149,9 @@ const get_all_order = async (fabcat_code, customer_code) => {
                         'status': result[index]['or_status'],
                         'dateTimeProcessed': await get_datetime_process(result[index]['order_code']),
                         'cancelReason': await get_cancel_reason(result[index]['order_code']),
+                        'staffID': ops == 'None' ? null : ops['employee_code'],
+                        'staffFName': ops == 'None' ? null : ops['first_name'],
+                        'staffLName': ops == 'None' ? null : ops['last_name'],
                         'paymentHistory': await get_all_partial_payment(result[index]['order_code'])
                     }
                     orders.push(order);
@@ -155,7 +159,40 @@ const get_all_order = async (fabcat_code, customer_code) => {
                 resolve(orders);
             }
         })
-    })  
+    })
+}
+
+const get_ops = async (order_code, status) => {
+    return new Promise((resolve, reject) => {
+        if (status == 'new') resolve('None');
+        else {
+            let name_query = "SELECT po.ops_staff_code, co.ops_staff_code AS cancelled_ops_staff_code, fo.order_code\
+            FROM fabric_agency.fab_order AS fo\
+            LEFT JOIN fabric_agency.processed_order AS po ON fo.order_code = po.order_code\
+            LEFT JOIN fabric_agency.cancelled_order AS co ON fo.order_code = co.order_code\
+            WHERE fo.order_code = ?;"
+
+            db.query(name_query, order_code, async (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    if (result[0]['cancelled_ops_staff_code'] == null && result[0]['ops_staff_code'] == null)
+                        resolve('None')
+                    else if (status == 'cancelled') {
+                        emp_code = result[0]['cancelled_ops_staff_code']
+                        let emp = await get_emp(emp_code)
+                        resolve(emp);
+                    }
+                    else {
+                        emp_code = result[0]['ops_staff_code']
+                        let emp = await get_emp(emp_code)
+                        resolve(emp);
+                    }
+                }
+            })
+        }
+
+    })
 }
 
 const get_all_partial_payment = async (order_code) => {
@@ -166,10 +203,10 @@ const get_all_partial_payment = async (order_code) => {
                 reject(err);
             } else {
                 let payments = []
-                for (index in result){
+                for (index in result) {
                     let payment = {
-                        'date' : result[index]['pay_date'],
-                        'time' : result[index]['pay_time'],
+                        'date': result[index]['pay_date'],
+                        'time': result[index]['pay_time'],
                         'amount': result[index]['amount']
                     }
                     payments.push(payment)
@@ -177,7 +214,7 @@ const get_all_partial_payment = async (order_code) => {
                 resolve(payments);
             }
         })
-    }) 
+    })
 }
 
 const get_cancel_reason = async (order_code) => {
@@ -200,7 +237,7 @@ const get_cancel_reason = async (order_code) => {
                 else resolve(result[0]['cancelled_reason']);
             }
         })
-    })  
+    })
 }
 
 const get_datetime_process = async (order_code) => {
@@ -226,7 +263,7 @@ const get_datetime_process = async (order_code) => {
                 else resolve(result[0]['processed_datetime']);
             }
         })
-    })  
+    })
 }
 
 const get_customer_info = async (customer_code) => {
@@ -251,7 +288,7 @@ const get_phone_customer = async (customer_code) => {
                 reject(err);
             } else {
                 let phones = []
-                for (const phone in result){
+                for (const phone in result) {
                     phones.push(result[phone]['phone_num'])
                 }
                 resovled(phones);
@@ -260,13 +297,29 @@ const get_phone_customer = async (customer_code) => {
     })
 }
 
-module.exports = {get_customer_category, 
-    get_order_info, 
-    get_category_by_ID, 
-    get_all_partial_payment, 
-    get_all_order, 
-    get_cancel_reason, 
-    get_datetime_process, 
-    get_all_category, 
+const get_emp = async (employee_code) => {
+    return new Promise((resovled, reject) => {
+        let categories_queries = "SELECT * FROM fabric_agency.employee WHERE employee_code = ?"
+        db.query(categories_queries, employee_code, async (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resovled(result[0]);
+            };
+        });
+    })
+}
+
+module.exports = {
+    get_customer_category,
+    get_order_info,
+    get_category_by_ID,
+    get_all_partial_payment,
+    get_all_order,
+    get_cancel_reason,
+    get_datetime_process,
+    get_all_category,
     get_customer_info,
-    get_phone_customer}
+    get_phone_customer,
+    get_emp
+}
