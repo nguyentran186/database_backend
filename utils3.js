@@ -24,15 +24,30 @@ const get_all_category = async (supplier_code) => {
                 reject(err);
             } else {
                 let categories = []
-                for (const supplier in result){
+                for (const cate in result){
                     temp = {
-                        'supplierID': result[supplier]['supplier_code'],
-                        'supplierName': result[supplier]['name'],
-                        'categories': await
+                        'ID': result[cate]['fabcat_code'],
+                        'name': result[cate]['name'],
+                        'color': result[cate]['color'],
+                        'quantity': result[cate]['quantity'],
+                        'priceHistory': await get_current_price(result[cate]['fabcat_code'])
                     }
-                    suppliers.push(temp)
+                    categories.push(temp)
                 }
-                resovled(suppliers);
+                resovled(categories);
+            };
+        });
+    })
+}
+
+const get_emp = async (employee_code) => {
+    return new Promise((resovled, reject) => {
+        let categories_queries = "SELECT * FROM fabric_agency.employee WHERE employee_code = ?"
+        db.query(categories_queries, employee_code, async (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resovled(result[0]);
             };
         });
     })
@@ -47,10 +62,44 @@ const get_all_supplier = async (name) => {
             } else {
                 let suppliers = []
                 for (const supplier in result){
-                    temp = {
+                    let emp = await get_emp(result[supplier]['partner_staff_code'])
+                    let temp = {
                         'supplierID': result[supplier]['supplier_code'],
                         'supplierName': result[supplier]['name'],
-                        'categories': await
+                        'partnerInfo': result[supplier]['partner_staff_code'],
+                        'partnerFName': emp['first_name'],
+                        'partnerLName': emp['last_name'],
+                        'partnerGender': emp['gender'],
+                        'partnerAddress': emp['address'],
+                        'categories': await get_all_category(result[supplier]['supplier_code'])
+                    }
+                    suppliers.push(temp)
+                }
+                resovled(suppliers);
+            };
+        });
+    })
+}
+
+const get_all_supplier_by_id = async (id) => {
+    return new Promise((resovled, reject) => {
+        let supplier_query = "SELECT * FROM fabric_agency.supplier WHERE supplier_code = ?"
+        db.query(supplier_query, id, async (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                let suppliers = []
+                for (const supplier in result){
+                    let emp = await get_emp(result[supplier]['partner_staff_code'])
+                    let temp = {
+                        'supplierID': result[supplier]['supplier_code'],
+                        'supplierName': result[supplier]['name'],
+                        'partnerInfo': result[supplier]['partner_staff_code'],
+                        'partnerFName': emp['first_name'],
+                        'partnerLName': emp['last_name'],
+                        'partnerGender': emp['gender'],
+                        'partnerAddress': emp['address'],
+                        'categories': await get_all_category(result[supplier]['supplier_code'])
                     }
                     suppliers.push(temp)
                 }
@@ -65,7 +114,7 @@ const get_current_price = async (fabcat_code) => {
         let price_query = "SELECT fcp.*, fc.name AS fabric_name\
         FROM fabric_agency.fabcat_current_price AS fcp\
         JOIN fabric_agency.fabric_cat AS fc ON fcp.fabcat_code = fc.fabcat_code\
-        WHERE fc.supplier_code = ?"
+        WHERE fc.fabcat_code = ?"
         db.query(price_query, fabcat_code, async (err, result) => {
             if (err) {
                 reject(err);
@@ -86,5 +135,8 @@ const get_current_price = async (fabcat_code) => {
 
 module.exports = {
     get_current_price,
-
+    get_all_category,
+    get_all_supplier,
+    get_all_supplier_by_id,
+    get_emp
 }

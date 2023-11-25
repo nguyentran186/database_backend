@@ -53,12 +53,27 @@ app.get('/ques1', async (req, res) => {
     res.json(res_)
 });
 
-app.post('/ques2', async (req, res) => {
-
+app.get('/ques2', async (req, res) => {
+    request = {
+        'name': 'test',
+        'bank_account': '123123123',
+        'address': '720 Dien Bien Phu',
+        'tax_code': 'FA2345',
+        'phone_numbers': ['0905123123', '0906123123']
+    }
+    utils2.operation(request, res)
 })
 
 app.get('/ques3', async (req, res) => {
-
+    let res_;
+    if(req['searchByID'] == true) {
+        res_ = await utils3.get_all_supplier(req['supplierName:'])
+    }
+    else{
+        res_ = await utils3.get_all_supplier_by_id(req['supplierID'])
+    }
+    console.log(res_)
+    res.json(res_)
 })
 
 app.get('/ques4', async (req, res) => {
