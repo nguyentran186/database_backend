@@ -1,7 +1,8 @@
 const express = require('express');
+const cors = require('cors');
 const utils1 = require('./utils1');
-const utils2 = require('./utils2');
-const utils3 = require('./utils3');
+// const utils2 = require('./utils2');
+// const utils3 = require('./utils3');
 const utils4 = require('./utils4');
 
 
@@ -21,6 +22,7 @@ let request = {
 };
 
 const app = express();
+app.use(cors());
 /////////////       FUNCTION                ///////////////
 ///////////////////////////////////////////////////////////
 
@@ -33,14 +35,15 @@ app.listen('3000', () => {
 });
 
 app.get('/ques1', async (req, res) => {
-    let fabric = await utils1.get_fabric(req)
+    let request = req.query
+    let fabric = await utils1.get_fabric(request)
     let supplier = await utils1.get_supplier(fabric['supplier_code'])
     let query_result = await utils1.import_info(fabric['fabcat_code'], req)
     let supplier_phone = await utils1.get_phone(supplier['supplier_code'])
     
     let res_ = {
             'categoryName': fabric['name'],
-            'categoryId': fabric['fabcat_code'],
+            'categoryID': fabric['fabcat_code'],
             'supplierID': fabric['supplier_code'],
             'supplierName': supplier['name'],
             'supplierPhoneNumbers' : supplier_phone,
@@ -53,13 +56,13 @@ app.get('/ques1', async (req, res) => {
     res.json(res_)
 });
 
-app.post('/ques2', async (req, res) => {
+// app.post('/ques2', async (req, res) => {
 
-})
+// })
 
-app.get('/ques3', async (req, res) => {
+// app.get('/ques3', async (req, res) => {
 
-})
+// })
 
 app.get('/ques4', async (req, res) => {
     let customer = await utils4.get_customer_info(req['customerID'])
