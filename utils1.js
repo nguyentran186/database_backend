@@ -12,7 +12,6 @@ db.connect((err) => {
     if (err) {
         throw err;
     }
-    console.log('MySql Connected ...')
 });
 
 const import_info = (id, req) => {

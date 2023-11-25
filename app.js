@@ -1,5 +1,6 @@
 const express = require('express');
-const utils = require('./utils');
+const utils1 = require('./utils1');
+const utils4 = require('./utils4');
 
 
 /////////////////    DATABASE CONNECT     ////////////////
@@ -30,10 +31,10 @@ app.listen('3000', () => {
 });
 
 app.get('/ques1', async (req, res) => {
-    let fabric = await utils.get_fabric(req)
-    let supplier = await utils.get_supplier(fabric['supplier_code'])
-    let query_result = await utils.import_info(fabric['fabcat_code'], req)
-    let supplier_phone = await utils.get_phone(supplier['supplier_code'])
+    let fabric = await utils1.get_fabric(req)
+    let supplier = await utils1.get_supplier(fabric['supplier_code'])
+    let query_result = await utils1.import_info(fabric['fabcat_code'], req)
+    let supplier_phone = await utils1.get_phone(supplier['supplier_code'])
     
     let res_ = {
             'categoryName': fabric['name'],
@@ -50,3 +51,25 @@ app.get('/ques1', async (req, res) => {
     res.json(res_)
 });
 
+app.get('/ques2', async (req, res) => {
+
+})
+
+app.get('/ques3', async (req, res) => {
+    
+})
+
+app.get('/ques4', async (req, res) => {
+    let customer = await utils4.get_customer_info(req['customerID'])
+    let res_ = {
+        'ID': customer['customer_code'],
+        'fName': customer['first_name'],
+        'lName': customer['last_name'],
+        'address': customer['address'],
+        'arrearage': customer['arrearage'],
+        'debtStartDate': customer['debt_start_date'],
+        'phoneNumbers': await utils4.get_phone_customer(customer['customer_code']),
+        'categories': await utils4.get_all_category(customer['customer_code'])
+    }
+    res.json(res_)
+})
