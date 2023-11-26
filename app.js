@@ -37,6 +37,7 @@ app.listen('3000', () => {
 app.get('/ques1', async (req, res) => {
     let request = req.query
     let fabric = await utils1.get_fabric(request)
+    console.log(fabric)
     let supplier = await utils1.get_supplier(fabric['supplier_code'])
     let query_result = await utils1.import_info(fabric['fabcat_code'], req)
     let supplier_phone = await utils1.get_phone(supplier['supplier_code'])

@@ -43,10 +43,11 @@ const import_info = (id, req) => {
 };
 
 const get_fabric = async (req) => {
-    if (req['searchByID'] == true) {
+    if (req['searchByID'] == 'true') {
+        console.log(req)
         return new Promise((resolve, reject) => {
             let name_query = 'SELECT * FROM fabric_cat WHERE fabcat_code = ?';
-            db.query(name_query, req['categoryId'], (err, result) => {
+            db.query(name_query, req['categoryID'], (err, result) => {
                 if (err) {
                     reject(err);
                 } else {
