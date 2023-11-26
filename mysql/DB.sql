@@ -90,11 +90,11 @@ CREATE TABLE fabric_agency.fab_order (
 		CHECK (order_code REGEXP 'OR[0-9][0-9][0-9][0-9]'),
     customer_code varchar(6) not null,
     
-    total_price int,
+    total_price int default 0,
     CONSTRAINT total_price
-		CHECK (total_price>0),
+		CHECK (total_price>=0),
 	
-    res_price int,
+    res_price int default 0,
     
     or_status varchar(15),
     CONSTRAINT or_status
@@ -147,7 +147,7 @@ CREATE TABLE fabric_agency.cancelled_order (
 
 CREATE TABLE fabric_agency.order_partial_payment (
 	order_code varchar(6) not null,
-    customer_code varchar(6) not null,
+    customer_code varchar(6),
     pay_date date not null,
     pay_time time not null,
     
@@ -161,7 +161,7 @@ CREATE TABLE fabric_agency.order_partial_payment (
 		REFERENCES customer(customer_code)
         ON UPDATE cascade
         ON DELETE cascade,
-	PRIMARY KEY (order_code, customer_code, pay_date, pay_time)
+	PRIMARY KEY (order_code, pay_date, pay_time)
 )
 ;
 
@@ -243,7 +243,7 @@ CREATE TABLE fabric_agency.fabcat_current_price (
 
 CREATE TABLE fabric_agency.import_info (
 	fabcat_code varchar(6) not null,
-    supplier_code varchar(6) not null,
+    supplier_code varchar(6) default 'SU0000',
     import_date date not null,
     import_time time not null,
     

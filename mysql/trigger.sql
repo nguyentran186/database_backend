@@ -3,7 +3,6 @@ SET SQL_SAFE_UPDATES = 0;
 SET FOREIGN_KEY_CHECKS=0;
 DROP TRIGGER IF EXISTS import_fabric; --  update quantity after import fabric
 DROP TRIGGER IF EXISTS delete_Bolt;  -- update fabric quantity after modify bolt
-DROP TRIGGER IF EXISTS insert_Bolt; -- update fabric quantity after modify bolt
 DROP TRIGGER IF EXISTS insert_bolt_in_order; -- update price of order after modify bolt and order
 DROP TRIGGER IF EXISTS delete_bolt_in_order; -- update price of order after modify bolt and order
 DROP TRIGGER IF EXISTS price_change; -- update arrearage after modify total price
@@ -15,16 +14,47 @@ DROP TRIGGER IF EXISTS insert_customer; -- check insert info
 DROP TRIGGER IF EXISTS insert_processed_order; -- check insert info
 DROP TRIGGER IF EXISTS insert_cancelled_order; -- insert into cancelled order
 DROP TRIGGER IF EXISTS partial_payment_status; 
-DROP TRIGGER IF EXISTS check_bolt_fab; -- check ì bolt and fabcat not fit in bolt and order
-DROP TRIGGER IF EXISTS check_ord_cus; -- check if order and customer not fit in partial payment
 DROP TRIGGER IF EXISTS check_mode; -- check customer code
+DROP TRIGGER IF EXISTS fill_supplier_code;
+DROP TRIGGER IF EXISTS fill_customer_code;
+
+DELIMITER $$
+CREATE TRIGGER fill_customer_code
+BEFORE INSERT ON order_partial_payment
+FOR EACH ROW
+BEGIN
+    DECLARE existing_customer_code VARCHAR(6);
+
+    -- Find the existing supplier code for the fabcat_code
+    SELECT customer_code
+    INTO existing_customer_code
+    FROM fabric_agency.fab_order
+    WHERE order_code = NEW.order_code;
+    SET NEW.customer_code = existing_customer_code;
+END $$
+DELIMITER ;
 
 -- IMPORT FABRIC TRIGGER      ////////////////////////////////////////////////////////////////////////
+DELIMITER //
+CREATE TRIGGER fill_supplier_code
+BEFORE INSERT ON fabric_agency.import_info
+FOR EACH ROW
+BEGIN
+    DECLARE existing_supplier_code VARCHAR(6);
+    SELECT supplier_code
+    INTO existing_supplier_code
+    FROM fabric_agency.fabric_cat
+    WHERE fabcat_code = NEW.fabcat_code;
+	
+    SET NEW.supplier_code = existing_supplier_code;
+END //
+DELIMITER ;
+DELIMITER $
 CREATE TRIGGER  import_fabric
 	AFTER INSERT ON import_info
 	FOR EACH ROW UPDATE fabric_cat SET quantity = quantity + NEW.quantity
 		WHERE fabcat_code = NEW.fabcat_code;
-        
+DELIMITER ;
         
         
 -- BOLT TRIGGER         ////////////////////////////////////////////////////////////////////////
@@ -32,10 +62,6 @@ CREATE TRIGGER delete_Bolt
 	AFTER DELETE ON bolt 
     FOR EACH ROW UPDATE fabric_cat SET quantity = quantity - 1
 		WHERE fabcat_code = OLD.fabcat_code;
-CREATE TRIGGER insert_Bolt
-	AFTER INSERT ON bolt 
-    FOR EACH ROW UPDATE fabric_cat SET quantity = quantity + 1
-        WHERE fabcat_code = NEW.fabcat_code;
         
         
         
@@ -48,11 +74,13 @@ CREATE TRIGGER insert_bolt_in_order
     DECLARE price INT DEFAULT 0;
     SET length = (select get_length(NEW.fabcat_code, NEW.bolt_code));
     SET price = (select get_selling_price(NEW.fabcat_code));
+    
     UPDATE fab_order SET fab_order.total_price = fab_order.total_price + price*length 
 			WHERE fab_order.order_code = NEW.order_code;
 	UPDATE fab_order SET fab_order.res_price = fab_order.res_price + price*length 
 			WHERE fab_order.order_code = NEW.order_code;
 	END$$
+    
 CREATE TRIGGER delete_bolt_in_order 
 	BEFORE DELETE ON bolt_and_order FOR EACH ROW BEGIN
     DECLARE order_quantity INT;
@@ -226,28 +254,4 @@ CREATE TRIGGER insert_cancelled_order
     END IF;
   END
   $$
-CREATE TRIGGER check_bolt_fab
-	BEFORE INSERT ON bolt_and_order FOR EACH ROW BEGIN
-    DECLARE fab_code varchar(6);
-    select bolt.fabcat_code into fab_code from bolt where bolt.bolt_code = NEW.bolt_code; 
-    IF NEW.fabcat_code <> fab_code THEN 
-		BEGIN
-        SIGNAL SQLSTATE '10000' 
-        SET MESSAGE_TEXT = 'Bolt and Fabric Category not fit';
-      END;
-    END IF;
-    END;
-$$
-CREATE TRIGGER check_ord_cus
-	BEFORE INSERT ON order_partial_payment FOR EACH ROW BEGIN
-	DECLARE cus_code varchar(6);
-    select fab_order.customer_code into cus_code from fab_order where fab_order.order_code = NEW.order_code;
-    IF NEW.customer_code <> cus_code THEN 
-    BEGIN
-        SIGNAL SQLSTATE '10001' 
-        SET MESSAGE_TEXT = 'Customer and Order not fit';
-      END;
-    END IF;
-    END;
-$$
 DELIMITER ;
