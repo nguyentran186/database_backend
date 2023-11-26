@@ -68,19 +68,21 @@ app.get('/ques2', async (req, res) => {
 })
 
 app.get('/ques3', async (req, res) => {
+    const request = req.query
     let res_;
-    if(req['searchByID'] == true) {
-        res_ = await utils3.get_all_supplier(req['supplierName:'])
+    if(request['searchByID'] == true) {
+        res_ = await utils3.get_all_supplier(request['supplierName:'])
     }
     else{
-        res_ = await utils3.get_all_supplier_by_id(req['supplierID'])
+        res_ = await utils3.get_all_supplier_by_id(request['supplierID'])
     }
     console.log(res_)
     res.json(res_)
 })
 
 app.get('/ques4', async (req, res) => {
-    let customer = await utils4.get_customer_info(req['customerID'])
+    const request = req.query
+    let customer = await utils4.get_customer_info(request['customerID'])
     let res_ = {
         'ID': customer['customer_code'],
         'fName': customer['first_name'],
