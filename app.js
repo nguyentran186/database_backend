@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const utils1 = require('./utils1');
-// const utils2 = require('./utils2');
-// const utils3 = require('./utils3');
+const utils2 = require('./utils2');
+const utils3 = require('./utils3');
 const utils4 = require('./utils4');
+const { get_supplier_code } = require('./utils2');
 
 
 /////////////////    DATABASE CONNECT     ////////////////
@@ -57,15 +58,8 @@ app.get('/ques1', async (req, res) => {
     res.json(res_)
 });
 
-app.get('/ques2', async (req, res) => {
-    request = {
-        'name': 'test',
-        'bank_account': '123123123',
-        'address': '720 Dien Bien Phu',
-        'tax_code': 'FA2345',
-        'phone_numbers': ['0905123123', '0906123123']
-    }
-    utils2.operation(request, res)
+app.post('/ques2', async (req, res) => {
+    utils2.operation(req, res)
 })
 
 app.get('/ques3', async (req, res) => {

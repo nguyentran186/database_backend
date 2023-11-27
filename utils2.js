@@ -19,67 +19,82 @@ db.connect((err) => {
 // ##############################################
 // ##############################################
 
-const operation = (req, res) => {
-    results = [];
-    
-    let query;
-    let supplier_code;
-    let found = true;
-    do {
-        console.log('in')
-        supplier_code = 'SU' +
-        Math.floor(Math.random() * 9).toString() +
-        Math.floor(Math.random() * 9).toString() +
-        Math.floor(Math.random() * 9).toString() +
-            Math.floor(Math.random() * 9).toString();
 
-        query = 'SELECT * FROM supplier WHERE supplier_code = ?';
-        db.query(query, supplier_code, async (err, result) => {
-            if (result.length == 0) {
-                break
+const get_supplier_code = async () => {
+    return new Promise(async (resolve, reject) => {
+      let found = true;
+      let supplier_code;
+  
+      const query = 'SELECT * FROM supplier WHERE supplier_code = ?';
+  
+      while (found) {
+        const randomFourDigitNumber = Math.floor(1000 + Math.random() * 9000);
+        supplier_code = `SU${randomFourDigitNumber}`;
+  
+        await new Promise((resolveQuery) => {
+          db.query(query, supplier_code, (err, result) => {
+            if (err) throw err;
+            if (result.length === 0) {
+              found = false;
+              resolveQuery();
             }
-        })
-    } while (found == true)
-
-
-
-    supplier_name = req['name'];
-    address = req['address'];
-    bank_account = req['bankAccount'];
-    tax_code = req['taxCode'];
-    phone_numbers = req['phoneNumbers'];
-
-
-    query = 'SELECT * FROM employee WHERE employee_type = ?';
-    db.query(query, 'partner_staff', async (err, result) => {
-        if (err) throw err;
-        if (result.length == 0) {
-            res.status(402).send("No partner staff")
-            return
-        }
-        let len = result.length;
-        partner_staff_code = result[Math.floor(Math.random() * len)]['employee_code'];
-        
-        query = 'INSERT INTO supplier(supplier_code, partner_staff_code, name, address, bank_account, tax_code) \
-        VALUES (?,?,?,?,?,?)';
-        db.query(query, [supplier_name, partner_staff_code, nam, address, bank_account, tax_code], (err, result) =>{
-            if (err) throw err
-            console.log("Insert supplier sucessful")
-        })
-    })
-
-
-    phone_numbers.map((phone_number) => {
-        query = 'INSERT INTO supplier_phone_number(supplier_code, phone_num) VALUES (\
-            ?,?)';
-
-        db.query(query,[supplier_code, phone_number], (error, results) => {
-            if (error) throw error;
-            console.log("Insert phone number sucessful")
+          });
         });
+      }
+  
+      resolve(supplier_code);
     });
-}
+  };
+  
+
+  const operation = async (req, res) => {
+    try {
+      // Generate supplier_code
+      const supplier_code = await get_supplier_code();
+  
+      // Other data from the request
+      const supplier_name = req['name'];
+      const address = req['address'];
+      const bank_account = req['bankAccount'];
+      const tax_code = req['taxCode'];
+      const phone_numbers = req['phoneNumbers'];
+  
+      // Get a random partner_staff_code
+      const partnerStaffQuery = 'SELECT * FROM employee WHERE employee_type = ?';
+      db.query(partnerStaffQuery, 'partner_staff', async (err, result) => {
+        if (err) throw err;
+        if (result.length === 0) {
+          res.status(402).send("No partner staff");
+          return;
+        }
+        const len = result.length;
+        const partner_staff_code = result[Math.floor(Math.random() * len)]['employee_code'];
+  
+        // Insert data into the supplier table
+        const insertSupplierQuery = 'INSERT INTO supplier(supplier_code, partner_staff_code, name, address, bank_account, tax_code) VALUES (?,?,?,?,?,?)';
+        db.query(insertSupplierQuery, [supplier_code, partner_staff_code, supplier_name, address, bank_account, tax_code], (err, result) => {
+          if (err) throw err;
+          console.log("Insert supplier successful");
+  
+          // Insert phone numbers into the supplier_phone_number table
+          phone_numbers.forEach((phone_number) => {
+            const insertPhoneNumberQuery = 'INSERT INTO supplier_phone_number(supplier_code, phone_num) VALUES (?,?)';
+            db.query(insertPhoneNumberQuery, [supplier_code, phone_number], (error, results) => {
+              if (error) throw error;
+              console.log("Insert phone number successful");
+            });
+          });
+  
+          res.status(200).send("Operation successful");
+        });
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send("Internal Server Error");
+    }
+  };  
 
 module.exports = {
-    operation
+    operation,
+    get_supplier_code
 }

@@ -201,8 +201,8 @@ CREATE TABLE fabric_agency.supplier_phone_number (
     
     FOREIGN KEY (supplier_code)
 		REFERENCES supplier(supplier_code)
-        ON UPDATE cascade
-        ON DELETE cascade,
+        ON UPDATE no action
+        ON DELETE no action,
 	PRIMARY KEY (supplier_code, phone_num)
 )
 ;
