@@ -66,7 +66,7 @@ app.get('/ques3', async (req, res) => {
     const request = req.query
     let res_;
     if(request['searchByID'] == 'false') {
-        res_ = await utils3.get_all_supplier(request['supplierName:'])
+        res_ = await utils3.get_all_supplier(request['supplierName'])
     }
     else{
         res_ = await utils3.get_all_supplier_by_id(request['supplierID'])
