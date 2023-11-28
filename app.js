@@ -65,7 +65,7 @@ app.post('/ques2', async (req, res) => {
 app.get('/ques3', async (req, res) => {
     const request = req.query
     let res_;
-    if(request['searchByID'] == true) {
+    if(request['searchByID'] == 'false') {
         res_ = await utils3.get_all_supplier(request['supplierName:'])
     }
     else{
