@@ -109,7 +109,7 @@ const get_supplier_code = async () => {
 
       // Send success response
       const _res = {
-        'success': true,
+        'success': 'Successful',
         'statusMessage': 'OK',
         'supplierCode': supplier_code,
         'staffID': staff['employee_code'],
