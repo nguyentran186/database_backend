@@ -55,8 +55,8 @@ const get_supplier_code = async () => {
       // Other data from the request
       const supplier_name = req['name'];
       const address = req['address'];
-      const bank_account = req['bankAccount'];
-      const tax_code = req['taxCode'];
+      const bank_account = req['bank'];
+      const tax_code = req['tax'];
       const phone_numbers = req['phoneNumbers'];
   
       // Check for duplicate phone numbers
@@ -105,8 +105,8 @@ const get_supplier_code = async () => {
       await Promise.all(insertPhoneNumberPromises);
   
       // Get staff details
-      const staff = await get_staff(partner_staff_code);
-  
+      let staff = await get_staff(partner_staff_code);
+
       // Send success response
       const _res = {
         'success': true,
@@ -127,9 +127,22 @@ const get_supplier_code = async () => {
       } else if (error.message === 'tax code duplicated') {
         res.status(400).send('Tax code duplicated');
       } else {
-        res.status(500).send('Internal Server Error');
+        res.status(500).send(error);
       }
     }
+  };
+
+  const get_staff = (partner_staff_code) => {
+    return new Promise((resolve, reject) => {
+      const new_query = 'SELECT * FROM employee WHERE employee_code = ?';
+      db.query(new_query, partner_staff_code, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result[0]);
+        }
+      });
+    });
   };
   
   const queryAsync = (sql, values) => {

@@ -1,4 +1,5 @@
 const express = require('express');
+const bodyParser = require('body-parser')
 const cors = require('cors');
 const utils1 = require('./utils1');
 const utils2 = require('./utils2');
@@ -23,6 +24,7 @@ let request = {
 };
 
 const app = express();
+app.use( bodyParser.json() );
 app.use(cors());
 /////////////       FUNCTION                ///////////////
 ///////////////////////////////////////////////////////////
@@ -67,7 +69,7 @@ app.post('/ques2', async (req, res) => {
     //     'taxCode': 'TA1233',
     //     'phoneNumbers': ['0989128301', '0918238122']
     // }
-    request = req.query
+    request = req.body['params']
     utils2.operation(request, res)
 })
 
