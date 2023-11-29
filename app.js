@@ -19,7 +19,7 @@ let request = {
     'dateFrom': '2023-09-06',
     'dateTo': '2023-09-18',
     'timeFrom': '14:00:00',
-    'timeTo': '07:00:00'
+    'timeTo': '07:00:00',
 };
 
 const app = express();
@@ -58,8 +58,17 @@ app.get('/ques1', async (req, res) => {
     res.json(res_)
 });
 
+
 app.post('/ques2', async (req, res) => {
-    utils2.operation(req, res)
+    // let request = {
+    //     'name': 'Nguyen',
+    //     'address': '123 Dien Bien Phu',
+    //     'bankAccount': '102938120',
+    //     'taxCode': 'TA1233',
+    //     'phoneNumbers': ['0989128301', '0918238122']
+    // }
+    request = req.query
+    utils2.operation(request, res)
 })
 
 app.get('/ques3', async (req, res) => {

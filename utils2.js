@@ -59,40 +59,92 @@ const get_supplier_code = async () => {
       const tax_code = req['taxCode'];
       const phone_numbers = req['phoneNumbers'];
   
+      // Check for duplicate phone numbers
+      const phoneDuplicatePromises = phone_numbers.map(async (phone_number) => {
+        const query = 'SELECT * FROM supplier_phone_number WHERE phone_num = ?';
+        const result = await queryAsync(query, phone_number);
+  
+        if (result.length > 0) {
+          throw new Error('phone duplicated');
+        }
+      });
+  
+      await Promise.all(phoneDuplicatePromises);
+  
+      // Check for duplicate tax code
+      const taxCodeQuery = 'SELECT * FROM supplier WHERE tax_code = ?';
+      const taxCodeResult = await queryAsync(taxCodeQuery, tax_code);
+  
+      if (taxCodeResult.length > 0) {
+        throw new Error('tax code duplicated');
+      }
+  
       // Get a random partner_staff_code
       const partnerStaffQuery = 'SELECT * FROM employee WHERE employee_type = ?';
-      db.query(partnerStaffQuery, 'partner_staff', async (err, result) => {
-        if (err) throw err;
-        if (result.length === 0) {
-          res.status(402).send("No partner staff");
-          return;
-        }
-        const len = result.length;
-        const partner_staff_code = result[Math.floor(Math.random() * len)]['employee_code'];
+      const partnerStaffResult = await queryAsync(partnerStaffQuery, 'partner_staff');
   
-        // Insert data into the supplier table
-        const insertSupplierQuery = 'INSERT INTO supplier(supplier_code, partner_staff_code, name, address, bank_account, tax_code) VALUES (?,?,?,?,?,?)';
-        db.query(insertSupplierQuery, [supplier_code, partner_staff_code, supplier_name, address, bank_account, tax_code], (err, result) => {
-          if (err) throw err;
-          console.log("Insert supplier successful");
+      if (partnerStaffResult.length === 0) {
+        res.status(402).send("No partner staff");
+        return;
+      }
   
-          // Insert phone numbers into the supplier_phone_number table
-          phone_numbers.forEach((phone_number) => {
-            const insertPhoneNumberQuery = 'INSERT INTO supplier_phone_number(supplier_code, phone_num) VALUES (?,?)';
-            db.query(insertPhoneNumberQuery, [supplier_code, phone_number], (error, results) => {
-              if (error) throw error;
-              console.log("Insert phone number successful");
-            });
-          });
+      const len = partnerStaffResult.length;
+      const partner_staff_code = partnerStaffResult[Math.floor(Math.random() * len)]['employee_code'];
   
-          res.status(200).send("Operation successful");
-        });
+      // Insert data into the supplier table
+      const insertSupplierQuery = 'INSERT INTO supplier(supplier_code, partner_staff_code, name, address, bank_account, tax_code) VALUES (?,?,?,?,?,?)';
+      await queryAsync(insertSupplierQuery, [supplier_code, partner_staff_code, supplier_name, address, bank_account, tax_code]);
+      console.log("Insert supplier successful");
+  
+      // Insert phone numbers into the supplier_phone_number table
+      const insertPhoneNumberPromises = phone_numbers.map((phone_number) => {
+        const insertPhoneNumberQuery = 'INSERT INTO supplier_phone_number(supplier_code, phone_num) VALUES (?,?)';
+        return queryAsync(insertPhoneNumberQuery, [supplier_code, phone_number]);
       });
+  
+      await Promise.all(insertPhoneNumberPromises);
+  
+      // Get staff details
+      const staff = await get_staff(partner_staff_code);
+  
+      // Send success response
+      const _res = {
+        'success': true,
+        'statusMessage': 'OK',
+        'supplierCode': supplier_code,
+        'staffID': staff['employee_code'],
+        'staffFName': staff['first_name'],
+        'staffLName': staff['last_name']
+      };
+      res.status(200).send(_res);
+  
     } catch (error) {
       console.error(error);
-      res.status(500).send("Internal Server Error");
+  
+      // Handle the error appropriately
+      if (error.message === 'phone duplicated') {
+        res.status(400).send('Phone number duplicated');
+      } else if (error.message === 'tax code duplicated') {
+        res.status(400).send('Tax code duplicated');
+      } else {
+        res.status(500).send('Internal Server Error');
+      }
     }
-  };  
+  };
+  
+  const queryAsync = (sql, values) => {
+    return new Promise((resolve, reject) => {
+      db.query(sql, values, (err, result) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  };
+  
+
 
 module.exports = {
     operation,
