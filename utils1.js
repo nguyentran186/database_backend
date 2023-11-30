@@ -20,9 +20,10 @@ db.connect((err) => {
 
 const import_info = (id, req) => {
     return new Promise((resolve, reject) => {
-        if (req['enableDateTimeRange'] == true) {
-            let fab_id_query = 'SELECT * FROM import_info WHERE fabcat_code = ? AND ((import_date > ? and import_date < ?) or (import_date = ? and import_time >= ?) or (import_date = ? and import_time <= ?))'
-            db.query(fab_id_query, [id, req['dateFrom'], req['dateTo'], req['dateFrom'], req['timeFrom'], req['dateTo'], req['timeTo']], (err, result) => {
+        if (req['enableDateTimeRange'] == 'true') {
+            console.log("Came here")
+            let fab_id_query = 'SELECT * FROM import_info WHERE fabcat_code = ? AND import_date >= ? AND import_date <= ? AND import_time >= ? AND import_time <= ?'
+            db.query(fab_id_query, [id, req['dateFrom'], req['dateTo'], req['timeFrom'], req['timeTo']], (err, result) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -51,18 +52,19 @@ const get_fabric = async (req) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(result[0]);
+                    resolve(result);
                 }
             })
         })
     } else {
         return new Promise((resolve, reject) => {
-            let name_query = 'SELECT * FROM fabric_cat WHERE name = ?';
-            db.query(name_query, req['categoryName'], (err, result) => {
+            const name = req['categoryName']
+            let name_query = 'SELECT * FROM fabric_cat WHERE name LIKE ?';
+            db.query(name_query, ['%' + name + '%'], (err, result) => {
                 if (err) {
                     reject(err);
                 } else {
-                    resolve(result[0]);
+                    resolve(result);
                 }
             });
         });

@@ -39,25 +39,37 @@ app.listen('3000', () => {
 
 app.get('/ques1', async (req, res) => {
     let request = req.query
-    let fabric = await utils1.get_fabric(request)
-    console.log(fabric)
-    let supplier = await utils1.get_supplier(fabric['supplier_code'])
-    let query_result = await utils1.import_info(fabric['fabcat_code'], req)
-    let supplier_phone = await utils1.get_phone(supplier['supplier_code'])
-    
-    let res_ = {
-            'categoryName': fabric['name'],
-            'categoryID': fabric['fabcat_code'],
-            'supplierID': fabric['supplier_code'],
-            'supplierName': supplier['name'],
-            'supplierPhoneNumbers' : supplier_phone,
-            'importInfos': query_result
-        }
-    
+    console.log(request)
+    let fabrics = await utils1.get_fabric(request)
+    if (fabrics.length == 0) {
+        let res_ = {}
         console.log(res_)
+        res.json()
+        return
+    }
+    console.log(fabrics)
+    let allMatches = []
+    for (let fabric in fabrics) {
+        fabric = fabrics[fabric]
+        let supplier = await utils1.get_supplier(fabric['supplier_code'])
+        let query_result = await utils1.import_info(fabric['fabcat_code'], request)
+        let supplier_phone = await utils1.get_phone(supplier['supplier_code'])
+        
+        let res_ = {
+                'categoryName': fabric['name'],
+                'categoryID': fabric['fabcat_code'],
+                'supplierID': fabric['supplier_code'],
+                'supplierName': supplier['name'],
+                'supplierPhoneNumbers' : supplier_phone,
+                'importInfos': query_result
+            }
+        
+            console.log(res_)
+        allMatches.push(res_)
+    }
 
 
-    res.json(res_)
+    res.json(allMatches)
 });
 
 
