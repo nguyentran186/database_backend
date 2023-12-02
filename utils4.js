@@ -587,7 +587,18 @@ module.exports = {
 //     })
 // }
 
-
+// const get_emp = async (employee_code) => {
+//     return new Promise((resovled, reject) => {
+//         let categories_queries = "SELECT * FROM fabric_agency.employee WHERE employee_code = ?"
+//         db.query(categories_queries, employee_code, async (err, result) => {
+//             if (err) {
+//                 reject(err);
+//             } else {
+//                 resovled(result[0]);
+//             };
+//         });
+//     })
+// }
 
 // module.exports = {
 //     get_customer_category,

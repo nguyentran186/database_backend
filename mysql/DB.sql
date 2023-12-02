@@ -1,5 +1,6 @@
 drop database fabric_agency;
 
+
 CREATE DATABASE fabric_agency
 ;
 
@@ -54,8 +55,9 @@ CREATE TABLE fabric_agency.customer (
     first_name varchar(50) not null,
     last_name varchar(50) not null,
     address	varchar(60),
+    mode varchar(20) default 'normal',
     arrearage int,
-    debt_start_date date,
+    debt_date int default 0,
     
     FOREIGN KEY (office_staff_code)
 		REFERENCES employee(employee_code)

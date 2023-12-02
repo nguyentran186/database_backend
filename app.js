@@ -121,3 +121,7 @@ app.get('/ques4', async (req, res) => {
     res.json(res_)
 })
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> a6fd378b653edf8b4fbf21b7cd10365a4e95cc9f
