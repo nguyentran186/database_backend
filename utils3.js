@@ -1,18 +1,7 @@
-const mysql = require('mysql')
+const db = require('./dbConnection');
 
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'fabric_agency',
-    timezone: "+07:00:000"
-});
 
-db.connect((err) => {
-    if (err) {
-        throw err;
-    }
-});
+
 // ##############################################
 // ##############################################
 // ##############################################
@@ -109,6 +98,38 @@ const get_all_supplier_by_id = async (id) => {
     })
 }
 
+const get_all_supplier_by_phoneNum = async (phone_num) => {
+    return new Promise((resovled, reject) => {
+        let supplier_query = 'SELECT S.supplier_code, S.name, S.partner_staff_code\
+                            FROM fabric_agency.supplier as S JOIN fabric_agency.supplier_phone_number as P\
+                                ON S.supplier_code = P.supplier_code\
+                            WHERE P.phone_num = ?;'
+
+        db.query(supplier_query, phone_num, async (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                let suppliers = []
+                for (const supplier in result){
+                    let emp = await get_emp(result[supplier]['partner_staff_code'])
+                    let temp = {
+                        'supplierID': result[supplier]['supplier_code'],
+                        'supplierName': result[supplier]['name'],
+                        'partnerInfo': result[supplier]['partner_staff_code'],
+                        'partnerFName': emp['first_name'],
+                        'partnerLName': emp['last_name'],
+                        'partnerGender': emp['gender'],
+                        'partnerAddress': emp['address'],
+                        'categories': await get_all_category(result[supplier]['supplier_code'])
+                    }
+                    suppliers.push(temp)
+                }
+                resovled(suppliers);
+            };
+        });
+    })
+}
+
 const get_current_price = async (fabcat_code) => {
     return new Promise((resovled, reject) => {
         let price_query = "SELECT fcp.*, fc.name AS fabric_name\
@@ -138,5 +159,6 @@ module.exports = {
     get_all_category,
     get_all_supplier,
     get_all_supplier_by_id,
+    get_all_supplier_by_phoneNum,
     get_emp
 }
