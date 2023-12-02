@@ -1,4 +1,5 @@
 USE fabric_agency;
+SET GLOBAL event_scheduler = ON;
 SET SQL_SAFE_UPDATES = 0;
 SET FOREIGN_KEY_CHECKS=0;
 DROP TRIGGER IF EXISTS import_fabric; --  update quantity after import fabric
@@ -126,18 +127,26 @@ CREATE TRIGGER price_change
     $$
     
 CREATE EVENT check_mode
-	ON SCHEDULE
-		AT 2015-01-01 14:56:59 INTERVAL 1 DAY_SECOND
-	DO BEGIN
-		UPDATE customer SET customer.debt_start_date = 0
-			WHERE customer.arrearage < 2000;
-		UPDATE customer SET customer.debt_start_date = customer.debt_start_date + 1
-			WHERE customer.arrearage >= 2000;
-		UPDATE customer SET customer.mode = 'warning'
-			WHERE customer.arrearage >= 2000;
-		UPDATE customer SET customer.mode = 'bad debt' 
-			WHERE customer.debt_start_date > 180;
-    END
+ON SCHEDULE
+    EVERY 1 SECOND
+STARTS CURRENT_TIMESTAMP
+ENDS CURRENT_TIMESTAMP + INTERVAL 1 YEAR
+ON COMPLETION PRESERVE
+DO BEGIN
+    UPDATE fabric_agency.customer
+    SET debt_date = 0, mode = 'normal'
+    WHERE arrearage < 2000;
+
+    UPDATE fabric_agency.customer
+    SET debt_date = debt_date + 1,
+        mode = CASE WHEN arrearage >= 2000 THEN 'warning' ELSE mode END
+    WHERE arrearage >= 2000;
+
+    UPDATE fabric_agency.customer
+    SET mode = 'bad debt'
+    WHERE debt_date > 180;
+END;
+
 DELIMITER ;    
         
         
@@ -254,4 +263,46 @@ CREATE TRIGGER insert_cancelled_order
     END IF;
   END
   $$
+DELIMITER ;
+
+DELIMITER //
+
+CREATE TRIGGER update_customer_arrearage_after_insert
+AFTER INSERT ON fabric_agency.fab_order
+FOR EACH ROW
+BEGIN
+    DECLARE total_res_price INT;
+
+    -- Calculate the sum of res prices for the customer
+    SELECT SUM(res_price) INTO total_res_price
+    FROM fabric_agency.fab_order
+    WHERE customer_code = NEW.customer_code;
+
+    -- Update the customer arrearage
+    UPDATE fabric_agency.customer
+    SET arrearage = total_res_price
+    WHERE customer_code = NEW.customer_code;
+END;
+
+//
+
+CREATE TRIGGER update_customer_arrearage_after_update
+AFTER UPDATE ON fabric_agency.fab_order
+FOR EACH ROW
+BEGIN
+    DECLARE total_res_price INT;
+
+    -- Calculate the sum of res prices for the customer
+    SELECT SUM(res_price) INTO total_res_price
+    FROM fabric_agency.fab_order
+    WHERE customer_code = NEW.customer_code;
+
+    -- Update the customer arrearage
+    UPDATE fabric_agency.customer
+    SET arrearage = total_res_price
+    WHERE customer_code = NEW.customer_code;
+END;
+
+//
+
 DELIMITER ;

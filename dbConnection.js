@@ -1,9 +1,9 @@
-const mysql = require('mysql2')
+const mysql = require('mysql')
 
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
-    password: '12345',
+    password: '',
     database: 'fabric_agency',
     timezone: "+07:00:000"
 });

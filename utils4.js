@@ -38,25 +38,24 @@ const get_customer_by_phoneNum = async (phone_num) => {
 }
 
 const get_all_order = async (customer_code) => {
-    return new Promise((resovled, reject) => {
-        let order_query = 'SELECT O.order_code, C.customer_code, O.date_time, O.total_price, O.order_status\
-                        FROM fabric_agency.fab_order as O JOIN fabric_agency.customer as C\
-                            ON O.customer_code = C.customer_code\
-                        WHERE O.customer_code = ?;'
-
+    return new Promise(async (resolved, reject) => {
+        let order_query = 'SELECT O.order_code, C.customer_code, O.date_time, O.total_price, O.or_status\
+                            FROM fabric_agency.fab_order as O JOIN fabric_agency.customer as C\
+                                ON O.customer_code = C.customer_code\
+                            WHERE O.customer_code = ?;'
 
         db.query(order_query, customer_code, async (err, result) => {
             if (err) {
                 reject(err);
             } else {
-                let orders = []
-                for (idx in result) {
-                    let ops = await get_ops(result[idx]['order_code'], result[idx]['order_status'])
-                    let order = {
+                let orders = [];
+                for (const idx in result) {
+                    const ops = await get_ops(result[idx]['order_code'], result[idx]['or_status']);
+                    const order = {
                         'ID': result[idx]['order_code'],
                         'dateTimeMade': result[idx]['date_time'],
                         'totalPrice': result[idx]['total_price'],
-                        'status': result[idx]['order_status'],
+                        'status': result[idx]['or_status'],
                         'dateTimeProcessed': await get_datetime_process(result[idx]['order_code']),
                         'cancelReason': await get_cancel_reason(result[idx]['order_code']),
                         'staffID': ops == 'None' ? null : ops['employee_code'],
@@ -64,15 +63,15 @@ const get_all_order = async (customer_code) => {
                         'staffLName': ops == 'None' ? null : ops['last_name'],
                         'paymentHistory': await get_all_partial_payment(result[idx]['order_code']),
                         'categories': await get_all_category(result[idx]['order_code'])
-                    }
+                    };
                     orders.push(order);
                 }
-                resovled(orders);
+                resolved(orders);
             }
         });
     });
-
 };
+
 
 const get_ops = async (order_code, status) => {
     return new Promise((resolve, reject) => {
@@ -167,40 +166,43 @@ const get_all_partial_payment = async (order_code) => {
 
 const get_all_category = async (order_code) => {
     return new Promise(async (resolve, reject) => {
-        bolts = await get_order_bolt(order_code)
-        let categories = []
+        const bolts = await get_order_bolt(order_code);
+        const categories = [];
 
-        for (idx in bolts) {
-            categoryID = bolts[idx]['fabcat_code']
-            let cate = -1
-            for (j in categories) {
+        for (const idx in bolts) {
+            const categoryID = bolts[idx]['fabcat_code'];
+            let cate = -1;
+
+            for (const j in categories) {
                 if (categoryID === categories[j]['categoryID']) {
-                    cate = j
-                    break
+                    cate = j;
+                    break;
                 }
             }
+
             if (cate === -1) {
                 categories.push({
                     'categoryID': categoryID,
                     'categoryName': bolts[idx]['categoryName'],
                     'color': bolts[idx]['color'],
                     'boltNumber': 1,
-
                     'bolts': [{
                         'boltID': bolts[idx]['boltID'],
                         'length': bolts[idx]['length']
                     }]
-                })
+                });
             } else {
-                categories[cate]['boltNumber'] += 1
+                categories[cate]['boltNumber'] += 1;
                 categories[cate]['bolts'].push({
                     'boltID': bolts[idx]['boltID'],
                     'length': bolts[idx]['length']
-                })
+                });
             }
         }
-    })
-}
+
+        resolve(categories);
+    });
+};
 
 const get_order_bolt = async (order_code) => {
     return new Promise((resolve, reject) => {
@@ -259,6 +261,7 @@ module.exports = {
     get_customer_by_phoneNum,
     get_phone_customer,
     get_all_order,
+    get_all_category
 }
 
 
@@ -573,18 +576,18 @@ module.exports = {
 //     })
 // }
 
-// const get_emp = async (employee_code) => {
-//     return new Promise((resovled, reject) => {
-//         let categories_queries = "SELECT * FROM fabric_agency.employee WHERE employee_code = ?"
-//         db.query(categories_queries, employee_code, async (err, result) => {
-//             if (err) {
-//                 reject(err);
-//             } else {
-//                 resovled(result[0]);
-//             };
-//         });
-//     })
-// }
+const get_emp = async (employee_code) => {
+    return new Promise((resovled, reject) => {
+        let categories_queries = "SELECT * FROM fabric_agency.employee WHERE employee_code = ?"
+        db.query(categories_queries, employee_code, async (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                resovled(result[0]);
+            };
+        });
+    })
+}
 
 // module.exports = {
 //     get_customer_category,
