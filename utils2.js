@@ -1,19 +1,4 @@
-const { query } = require('express');
-const mysql = require('mysql')
-
-const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'fabric_agency',
-    timezone: "+07:00:000"
-});
-
-db.connect((err) => {
-    if (err) {
-        throw err;
-    }
-});
+const db = require('./dbConnection');
 
 // ##############################################
 // ##############################################
