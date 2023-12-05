@@ -1,10 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser')
 const cors = require('cors');
-const utils1 = require('./utils1');
-const utils2 = require('./utils2');
-const utils3 = require('./utils3');
-const utils4 = require('./utils4');
+// const utils1 = require('./utils1');
+// const utils2 = require('./utils2');
+// const utils3 = require('./utils3');
+// const utils4 = require('./utils4');
+const login = require('./login');
 // const { get_supplier_code } = require('./utils2');
 
 
@@ -26,6 +27,9 @@ let request = {
 const app = express();
 app.use( bodyParser.json());
 app.use(cors());
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
 /////////////       FUNCTION                ///////////////
 ///////////////////////////////////////////////////////////
 
@@ -120,4 +124,50 @@ app.get('/ques4', async (req, res) => {
     }
     // console.log(res_)
     res.json(res_)
+})
+
+app.post('/login/safe', async (req, res) => {
+    const request = req.body
+    const result = await login.safeLogin(request)
+    if (result.length === 0) {
+        const response = {
+            'status': 'failed',
+            'message': 'Username or password is incorrect'
+        }
+        res.status(200).send(response)
+    } else {
+        const response = {
+            'status': 'success',
+            'message': 'Login successfully'
+        }
+        res.status(200).send(response)
+    }
+})
+
+app.post('/login/unsafe', async (req, res) => {
+    const request = req.body
+    let result = []
+    try {
+        result = await login.unsafeLogin(request)
+    } catch (err) {
+        console.log(err)
+        const response = {
+            'status': 'failed',
+            'message': 'Internal server error'
+        }
+        res.status(200).send(response)
+    }
+    if (result.length === 0) {
+        const response = {
+            'status': 'failed',
+            'message': 'Username or password is incorrect'
+        }
+        res.status(200).send(response)
+    } else {
+        const response = {
+            'status': 'success',
+            'message': 'Login successfully'
+        }
+        res.status(200).send(response)
+    }
 })
