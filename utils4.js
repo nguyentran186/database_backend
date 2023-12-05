@@ -22,7 +22,7 @@ const get_customer_info = async (customer_code) => {
 
 const get_customer_by_phoneNum = async (phone_num) => {
     return new Promise((resovled, reject) => {
-        let order_query = 'SELECT C.customer_code, C.first_name, C.last_name, C.address, C.arrearage, C.debt_start_date\
+        let order_query = 'SELECT C.customer_code, C.first_name, C.last_name, C.address, C.arrearage, C.debt_date\
                             FROM fabric_agency.customer as C JOIN fabric_agency.customer_phone_number as P\
                                 ON C.customer_code = P.customer_code\
                             WHERE P.phone_num = ?;'
@@ -199,7 +199,7 @@ const get_all_category = async (order_code) => {
                 });
             }
         }
-
+        console.log(categories)
         resolve(categories);
     });
 };

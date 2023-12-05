@@ -19,6 +19,7 @@ DROP TRIGGER IF EXISTS check_mode; -- check customer code
 DROP TRIGGER IF EXISTS fill_supplier_code;
 DROP TRIGGER IF EXISTS fill_customer_code;
 
+
 DELIMITER $$
 CREATE TRIGGER fill_customer_code
 BEFORE INSERT ON order_partial_payment
@@ -126,6 +127,7 @@ CREATE TRIGGER price_change
 	END
     $$
     
+DELIMITER //
 CREATE EVENT check_mode
 ON SCHEDULE
     EVERY 1 SECOND
@@ -134,20 +136,23 @@ ENDS CURRENT_TIMESTAMP + INTERVAL 1 YEAR
 ON COMPLETION PRESERVE
 DO BEGIN
     UPDATE fabric_agency.customer
-    SET debt_date = 0, mode = 'normal'
+    SET debt_date = CURDATE()
+    WHERE debt_date IS NULL;
+    
+    UPDATE fabric_agency.customer
+    SET debt_date = CURDATE(), mode = 'normal'
     WHERE arrearage < 2000;
 
     UPDATE fabric_agency.customer
-    SET debt_date = debt_date + 1,
-        mode = CASE WHEN arrearage >= 2000 THEN 'warning' ELSE mode END
-    WHERE arrearage >= 2000;
+    SET mode = 'warning'
+    WHERE arrearage >= 2000 AND mode <> 'warning';
 
     UPDATE fabric_agency.customer
     SET mode = 'bad debt'
-    WHERE debt_date > 180;
+    WHERE (CURDATE() - debt_date) > 180;
 END;
-
-DELIMITER ;    
+//
+DELIMITER ;   
         
         
         

@@ -57,7 +57,7 @@ CREATE TABLE fabric_agency.customer (
     address	varchar(60),
     mode varchar(20) default 'normal',
     arrearage int,
-    debt_date int default 0,
+    debt_date date,
     
     FOREIGN KEY (office_staff_code)
 		REFERENCES employee(employee_code)
