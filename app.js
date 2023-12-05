@@ -1,10 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser')
 const cors = require('cors');
-// const utils1 = require('./utils1');
-// const utils2 = require('./utils2');
-// const utils3 = require('./utils3');
-// const utils4 = require('./utils4');
+const utils1 = require('./utils1');
+const utils2 = require('./utils2');
+const utils3 = require('./utils3');
+const utils4 = require('./utils4');
 const login = require('./login');
 // const { get_supplier_code } = require('./utils2');
 
