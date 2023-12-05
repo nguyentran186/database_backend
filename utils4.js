@@ -170,7 +170,7 @@ const get_all_category = async (order_code) => {
         const categories = [];
 
         for (const idx in bolts) {
-            const categoryID = bolts[idx]['fabcat_code'];
+            const categoryID = bolts[idx]['categoryID'];
             let cate = -1;
 
             for (const j in categories) {
@@ -199,7 +199,7 @@ const get_all_category = async (order_code) => {
                 });
             }
         }
-        console.log(categories)
+        // console.log(categories)
         resolve(categories);
     });
 };
