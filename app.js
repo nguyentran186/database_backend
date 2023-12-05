@@ -110,6 +110,11 @@ app.get('/ques4', async (req, res) => {
         customer = await utils4.get_customer_by_phoneNum(request['customerPhoneNumber'])
     } else customer = await utils4.get_customer_info(request['customerID'])
 
+    if (customer.length === 0) {
+        res.json()
+        return
+    }
+    customer = customer[0]
 
     let res_ = {
         'ID': customer['customer_code'],

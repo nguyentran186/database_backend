@@ -14,7 +14,7 @@ const get_customer_info = async (customer_code) => {
             if (err) {
                 reject(err);
             } else {
-                resovled(result[0]);
+                resovled(result);
             };
         });
     })
@@ -30,7 +30,7 @@ const get_customer_by_phoneNum = async (phone_num) => {
             if (err) {
                 reject(err);
             } else {
-                resovled(result[0]);
+                resovled(result);
             };
         });
     })
