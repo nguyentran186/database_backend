@@ -44,6 +44,7 @@ const get_supplier_code = async () => {
       const tax_code = req['tax'];
       const phone_numbers = req['phoneNumbers'];
   
+      var operationSuccess = true;
       // Check for duplicate phone numbers
       const phoneDuplicatePromises = phone_numbers.map(async (phone_number) => {
         const query = 'SELECT * FROM supplier_phone_number WHERE phone_num = ?';
@@ -54,7 +55,18 @@ const get_supplier_code = async () => {
         }
       });
   
-      await Promise.all(phoneDuplicatePromises);
+      await Promise.all(phoneDuplicatePromises).catch((err) => {
+        if (err.message === 'phone duplicated') {
+          res.status(400).send('Phone number duplicated');
+          operationSuccess = false;
+        }
+      });
+
+      if (!operationSuccess) {
+        return;
+      } else {
+        operationSuccess = true;
+      }
   
       // Check for duplicate tax code
       const taxCodeQuery = 'SELECT * FROM supplier WHERE tax_code = ?';
