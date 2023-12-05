@@ -183,10 +183,14 @@ CREATE TRIGGER partial_payment_status
     FOR EACH ROW BEGIN
 		DECLARE o_status varchar(15);
         SELECT get_or_status(NEW.order_code) into o_status;
-        IF o_status = 'new'
-        THEN
-			UPDATE fab_order SET fab_order.or_status = 'partial paid'
-				WHERE fab_order.order_code = NEW.order_code;
+        IF o_status = 'new' OR o_status = 'cancelled' THEN
+          BEGIN
+            SIGNAL SQLSTATE '44000' 
+            SET MESSAGE_TEXT = 'Cannot insert partial payment for new or cancelled order';
+          END;
+        ElSE
+          UPDATE fab_order SET fab_order.or_status = 'partial paid'
+            WHERE fab_order.order_code = NEW.order_code;
         END IF;
     END;
 $$
