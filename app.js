@@ -95,6 +95,11 @@ app.get('/ques3', async (req, res) => {
             res_ = await utils3.get_all_supplier_by_id(request['supplierID'])
         }
     }
+
+    if (res_.length === 0) {
+        res.json([])
+        return
+    }
     
     console.log(res_)
     console.log(res_[0].categories)

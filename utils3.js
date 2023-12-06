@@ -42,10 +42,27 @@ const get_emp = async (employee_code) => {
     })
 }
 
+const get_phone = async (supplier_code) => {
+    return new Promise((resovled, reject) => {
+        let supplier_phone_query = 'SELECT * FROM supplier_phone_number WHERE supplier_code = ?'
+        db.query(supplier_phone_query, supplier_code, async (err, result) => {
+            if (err) {
+                reject(err);
+            } else {
+                let phones = []
+                for (const phone in result){
+                    phones.push(result[phone]['phone_num'])
+                }
+                resovled(phones);
+            };
+        });
+    })
+}
+
 const get_all_supplier = async (name) => {
     return new Promise((resovled, reject) => {
         let supplier_query = "SELECT * FROM fabric_agency.supplier WHERE name like ?"
-        db.query(supplier_query, name, async (err, result) => {
+        db.query(supplier_query, ['%' + name + '%'], async (err, result) => {
             if (err) {
                 reject(err);
             } else {
@@ -55,6 +72,7 @@ const get_all_supplier = async (name) => {
                     let temp = {
                         'supplierID': result[supplier]['supplier_code'],
                         'supplierName': result[supplier]['name'],
+                        'supplierPhoneNumbers': await get_phone(result[supplier]['supplier_code']),
                         'partnerInfo': result[supplier]['partner_staff_code'],
                         'partnerFName': emp['first_name'],
                         'partnerLName': emp['last_name'],
@@ -83,6 +101,7 @@ const get_all_supplier_by_id = async (id) => {
                     let temp = {
                         'supplierID': result[supplier]['supplier_code'],
                         'supplierName': result[supplier]['name'],
+                        'supplierPhoneNumbers': await get_phone(result[supplier]['supplier_code']),
                         'partnerInfo': result[supplier]['partner_staff_code'],
                         'partnerFName': emp['first_name'],
                         'partnerLName': emp['last_name'],
@@ -115,6 +134,7 @@ const get_all_supplier_by_phoneNum = async (phone_num) => {
                     let temp = {
                         'supplierID': result[supplier]['supplier_code'],
                         'supplierName': result[supplier]['name'],
+                        'supplierPhoneNumbers': await get_phone(result[supplier]['supplier_code']),
                         'partnerInfo': result[supplier]['partner_staff_code'],
                         'partnerFName': emp['first_name'],
                         'partnerLName': emp['last_name'],
@@ -160,5 +180,6 @@ module.exports = {
     get_all_supplier,
     get_all_supplier_by_id,
     get_all_supplier_by_phoneNum,
+    get_phone,
     get_emp
 }
