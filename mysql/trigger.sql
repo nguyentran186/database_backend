@@ -12,7 +12,8 @@ DROP TRIGGER IF EXISTS insert_part_payment;  -- update arrearage after modify pa
 DROP TRIGGER IF EXISTS update_part_payment;  -- update arrearage after modify partial payment
 DROP TRIGGER IF EXISTS insert_supplier; -- check insert info
 DROP TRIGGER IF EXISTS insert_customer; -- check insert info
-DROP TRIGGER IF EXISTS insert_processed_order; -- check insert info
+DROP TRIGGER IF EXISTS before_insert_processed_order; -- check insert info
+DROP TRIGGER IF EXISTS after_insert_processed_order;
 DROP TRIGGER IF EXISTS insert_cancelled_order; -- insert into cancelled order
 DROP TRIGGER IF EXISTS partial_payment_status; 
 DROP TRIGGER IF EXISTS check_mode; -- check customer code
@@ -136,11 +137,7 @@ ENDS CURRENT_TIMESTAMP + INTERVAL 1 YEAR
 ON COMPLETION PRESERVE
 DO BEGIN
     UPDATE fabric_agency.customer
-    SET debt_date = CURDATE()
-    WHERE debt_date IS NULL;
-    
-    UPDATE fabric_agency.customer
-    SET debt_date = CURDATE(), mode = 'normal'
+    SET mode = 'normal'
     WHERE arrearage < 2000;
 
     UPDATE fabric_agency.customer
@@ -149,7 +146,7 @@ DO BEGIN
 
     UPDATE fabric_agency.customer
     SET mode = 'bad debt'
-    WHERE (CURDATE() - debt_date) > 180;
+    WHERE DATEDIFF(CURDATE(), debt_date) > 180;
 END;
 //
 DELIMITER ;   
@@ -236,7 +233,7 @@ CREATE TRIGGER insert_supplier
   END
 $$
 
-CREATE TRIGGER insert_processed_order
+CREATE TRIGGER before_insert_processed_order
 	BEFORE INSERT ON processed_order FOR EACH ROW BEGIN
     DECLARE job_type varchar(50);
     SELECT get_job(NEW.ops_staff_code) INTO job_type;
@@ -253,6 +250,48 @@ CREATE TRIGGER insert_processed_order
     END IF;
   END
 $$
+
+CREATE TRIGGER after_insert_processed_order
+	AFTER INSERT ON processed_order FOR EACH ROW BEGIN
+    DECLARE v_order_price INT DEFAULT 0;
+    DECLARE v_customer_code VARCHAR(50);
+    DECLARE v_date_made date;
+    DECLARE v_customer_cur_arrearage INT DEFAULT 0;
+    DECLARE v_customer_cur_debt_date date;
+    DECLARE v_cur_mode VARCHAR(20);
+    DECLARE total_res_price INT;
+
+
+    SELECT customer_code, total_price, DATE(date_time)
+    INTO v_customer_code, v_order_price, v_date_made
+    FROM fabric_agency.fab_order
+    WHERE order_code = NEW.order_code;
+
+    SELECT mode, debt_date
+    INTO v_cur_mode, v_customer_cur_debt_date
+    FROM fabric_agency.customer
+    WHERE customer_code = v_customer_code;
+
+    -- Calculate the sum of res prices for the customer
+    SELECT SUM(res_price) INTO total_res_price
+    FROM fabric_agency.fab_order
+    WHERE customer_code = v_customer_code AND or_status NOT IN ('new', 'cancelled');
+
+    -- Update the customer arrearage
+    UPDATE fabric_agency.customer
+    SET arrearage = total_res_price
+    WHERE customer_code = v_customer_code;
+
+    IF v_customer_cur_debt_date IS NULL THEN 
+      BEGIN
+        UPDATE fabric_agency.customer
+        SET debt_date = DATE(NEW.processed_datetime)
+        WHERE customer_code = v_customer_code;
+      END;
+    END IF;
+  END
+$$
+
 
 CREATE TRIGGER insert_cancelled_order
 	BEFORE INSERT ON cancelled_order FOR EACH ROW BEGIN
@@ -276,24 +315,24 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE TRIGGER update_customer_arrearage_after_insert
-AFTER INSERT ON fabric_agency.fab_order
-FOR EACH ROW
-BEGIN
-    DECLARE total_res_price INT;
+-- CREATE TRIGGER update_customer_arrearage_after_insert
+-- AFTER INSERT ON fabric_agency.fab_order
+-- FOR EACH ROW
+-- BEGIN
+--     DECLARE total_res_price INT;
 
-    -- Calculate the sum of res prices for the customer
-    SELECT SUM(res_price) INTO total_res_price
-    FROM fabric_agency.fab_order
-    WHERE customer_code = NEW.customer_code;
+--     -- Calculate the sum of res prices for the customer
+--     SELECT SUM(res_price) INTO total_res_price
+--     FROM fabric_agency.fab_order
+--     WHERE customer_code = NEW.customer_code;
 
-    -- Update the customer arrearage
-    UPDATE fabric_agency.customer
-    SET arrearage = total_res_price
-    WHERE customer_code = NEW.customer_code;
-END;
+--     -- Update the customer arrearage
+--     UPDATE fabric_agency.customer
+--     SET arrearage = total_res_price
+--     WHERE customer_code = NEW.customer_code;
+-- END;
 
-//
+-- //
 
 CREATE TRIGGER update_customer_arrearage_after_update
 AFTER UPDATE ON fabric_agency.fab_order
@@ -304,7 +343,7 @@ BEGIN
     -- Calculate the sum of res prices for the customer
     SELECT SUM(res_price) INTO total_res_price
     FROM fabric_agency.fab_order
-    WHERE customer_code = NEW.customer_code;
+    WHERE customer_code = NEW.customer_code AND or_status NOT IN ('new', 'cancelled');
 
     -- Update the customer arrearage
     UPDATE fabric_agency.customer
