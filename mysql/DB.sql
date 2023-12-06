@@ -180,11 +180,11 @@ CREATE TABLE fabric_agency.supplier	 (
     name varchar(50) not null,
     address varchar(60),
     
-    bank_account varchar(11),
+    bank_account varchar(15),
     CONSTRAINT bank_account
 		CHECK (bank_account not like '%[^0-9]%'), 
         
-    tax_code varchar(11),
+    tax_code varchar(13),
     
     FOREIGN KEY (partner_staff_code)
 		REFERENCES employee(employee_code)
