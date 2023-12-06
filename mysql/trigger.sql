@@ -52,12 +52,11 @@ BEGIN
     SET NEW.supplier_code = existing_supplier_code;
 END //
 DELIMITER ;
-DELIMITER $
+
 CREATE TRIGGER  import_fabric
 	AFTER INSERT ON import_info
 	FOR EACH ROW UPDATE fabric_cat SET quantity = quantity + NEW.quantity
 		WHERE fabcat_code = NEW.fabcat_code;
-DELIMITER ;
         
         
 -- BOLT TRIGGER         ////////////////////////////////////////////////////////////////////////
@@ -132,8 +131,10 @@ DELIMITER //
 CREATE EVENT check_mode
 ON SCHEDULE
     EVERY 1 SECOND
+-- Set the schedule for every second for easier to observe the behavior
 STARTS CURRENT_TIMESTAMP
 ENDS CURRENT_TIMESTAMP + INTERVAL 1 YEAR
+-- Also set the end time for 1 year from now so that the event will accidentally not run forever
 ON COMPLETION PRESERVE
 DO BEGIN
     UPDATE fabric_agency.customer
@@ -142,11 +143,12 @@ DO BEGIN
 
     UPDATE fabric_agency.customer
     SET mode = 'warning'
-    WHERE arrearage >= 2000 AND mode <> 'warning';
+    WHERE arrearage >= 2000 AND mode = 'normal';
 
     UPDATE fabric_agency.customer
     SET mode = 'bad debt'
-    WHERE DATEDIFF(CURDATE(), debt_date) > 180;
+    WHERE DATEDIFF(CURDATE(), debt_date) > 180 AND arrearage >= 2000;
+
 END;
 //
 DELIMITER ;   
@@ -165,13 +167,27 @@ CREATE TRIGGER delete_part_payment
 CREATE TRIGGER insert_part_payment
 	AFTER INSERT ON order_partial_payment
     FOR EACH ROW BEGIN 
-		UPDATE customer SET arrearage = arrearage - NEW.amount
-			WHERE customer.customer_code = NEW.customer_code;
-		UPDATE fab_order SET res_price = res_price - NEW.amount
-			WHERE fab_order.order_code = NEW.order_code;
-        
-		UPDATE fab_order SET or_status = 'full paid'
-			WHERE fab_order.res_price <= 0 && fab_order.total_price <> 0;
+      DECLARE v_customer_cur_arrearage INT DEFAULT 0;
+      DECLARE v_customer_cur_debt_date date;
+
+      UPDATE customer SET arrearage = arrearage - NEW.amount
+        WHERE customer.customer_code = NEW.customer_code;
+      UPDATE fab_order SET res_price = res_price - NEW.amount
+        WHERE fab_order.order_code = NEW.order_code;
+          
+      UPDATE fab_order SET or_status = 'full paid'
+        WHERE fab_order.res_price <= 0 && fab_order.total_price <> 0;
+
+      SELECT arrearage, debt_date
+      INTO v_customer_cur_arrearage, v_customer_cur_debt_date
+      FROM customer
+      WHERE customer_code = NEW.customer_code;
+
+      IF v_customer_cur_arrearage <= 0 AND v_customer_cur_debt_date IS NOT NULL THEN
+        UPDATE fabric_agency.customer
+        SET debt_date = NULL
+        WHERE customer_code = NEW.customer_code;
+      END IF;
 		
 	END;
 $$
