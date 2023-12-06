@@ -127,6 +127,7 @@ app.get('/ques4', async (req, res) => {
         'lName': customer['last_name'],
         'address': customer['address'],
         'arrearage': customer['arrearage'] === null ? 0 : customer['arrearage'],
+        'mode': customer['mode'],
         'debtStartDate': customer['debt_date'] === null ? 'null' : customer['debt_date'],
         'phoneNumbers': await utils4.get_phone_customer(customer['customer_code']),
         'orders': await utils4.get_all_order(customer['customer_code']),
