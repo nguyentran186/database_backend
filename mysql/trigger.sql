@@ -176,7 +176,7 @@ CREATE TRIGGER insert_part_payment
         WHERE fab_order.order_code = NEW.order_code;
           
       UPDATE fab_order SET or_status = 'full paid'
-        WHERE fab_order.res_price <= 0 && fab_order.total_price <> 0;
+        WHERE res_price <= 0;
 
       SELECT arrearage, debt_date
       INTO v_customer_cur_arrearage, v_customer_cur_debt_date
@@ -201,7 +201,7 @@ CREATE TRIGGER partial_payment_status
             SIGNAL SQLSTATE '44000' 
             SET MESSAGE_TEXT = 'Cannot insert partial payment for new or cancelled order';
           END;
-        ElSE
+        ElSEIF o_status != 'full paid' THEN
           UPDATE fab_order SET fab_order.or_status = 'partial paid'
             WHERE fab_order.order_code = NEW.order_code;
         END IF;

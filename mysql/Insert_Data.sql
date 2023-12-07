@@ -59,7 +59,10 @@ INSERT INTO fab_order(order_code, customer_code, or_status, date_time) VALUES
 ('OR0006', 'CU0005', 'new', '2021-12-08 06:18:33'),
 ('OR0007', 'CU0004', 'new', '2021-3-11 23:40:16'),
 ('OR0008', 'CU0001', 'new', '2023-09-27 11:18:33'),
-('OR0009', 'CU0002', 'new', '2022-06-26 9:36:37');
+('OR0009', 'CU0002', 'new', '2022-06-26 9:36:37'),
+('OR0010', 'CU0003', 'new', '2022-07-25 9:30:28'),
+('OR0011', 'CU0004', 'new', '2023-06-24 12:25:19'),
+('OR0012', 'CU0005', 'new', '2022-09-18 15:15:30');
 
 INSERT INTO processed_order (order_code, ops_staff_code, processed_datetime) VALUES
 ('OR0002', 'EM0002', '2023-07-22 04:12:03'),
@@ -70,7 +73,10 @@ INSERT INTO processed_order (order_code, ops_staff_code, processed_datetime) VAL
 
 INSERT INTO cancelled_order (order_code, ops_staff_code, cancelled_reason) VALUES
 ('OR0005', 'EM0002', 'Not enough bolt'),
-('OR0009', 'EM0009', 'Customer arrearage is over limit');	
+('OR0009', 'EM0009', 'Customer arrearage is over limit'),
+('OR0010', 'EM0006', 'I do not like selling to you'),
+('OR0011', 'EM0006', 'Not enough bolt'),
+('OR0012', 'EM0008', 'Not enough bolt');
 
 INSERT INTO supplier(supplier_code, partner_staff_code, name, address, bank_account, tax_code) VALUES
 ('SU0001', 'EM0004', 'Silk Agency', '15 Le Thanh Ton', '00129300312', 'FA1234'),
@@ -178,8 +184,8 @@ VALUES
 ('BO0028', 'OR0004', 'FA0006'),
 ('BO0029', 'OR0004', 'FA0004'),
 ('BO0006', 'OR0005', 'FA0007'),
-('BO0014', 'OR0005', 'FA0008'),
-('BO0024', 'OR0005', 'FA0009'),
+('BO0014', 'OR0010', 'FA0008'),
+('BO0024', 'OR0011', 'FA0009'),
 ('BO0019', 'OR0006', 'FA0006'),
 ('BO0009', 'OR0007', 'FA0008'),
 ('BO0016', 'OR0007', 'FA0004'),
@@ -190,7 +196,7 @@ VALUES
 ('BO0027', 'OR0008', 'FA0007'),
 ('BO0010', 'OR0009', 'FA0006'),
 ('BO0018', 'OR0009', 'FA0003'),
-('BO0023', 'OR0009', 'FA0005'),
+('BO0023', 'OR0012', 'FA0005'),
 ('BO0025', 'OR0009', 'FA0002');
 
 
@@ -201,4 +207,5 @@ INSERT INTO order_partial_payment (order_code, pay_date, pay_time, amount) VALUE
 ('OR0008', '2023-06-23', '01:18:32', 400),
 ('OR0008', '2023-06-24', '01:18:32', 1500),
 -- ('OR0001', '2023-06-22', '01:18:32', 150),
-('OR0004', '2023-09-27', '20:18:15', 7000);
+('OR0004', '2023-09-27', '20:18:15', 7000),
+('OR0008', '2023-06-29', '12:18:32', 6187);
