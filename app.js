@@ -103,7 +103,6 @@ app.get('/ques3', async (req, res) => {
     
     console.log(res_)
     console.log(res_[0].categories)
-    console.log(res_[0].categories[0].priceHistory)
     res.json(res_)
 })
 
