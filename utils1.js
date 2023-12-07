@@ -7,9 +7,8 @@ const db = require('./dbConnection');
 const import_info = (id, req) => {
     return new Promise((resolve, reject) => {
         if (req['enableDateTimeRange'] == 'true') {
-            console.log("Came here")
-            let fab_id_query = 'SELECT * FROM import_info WHERE fabcat_code = ? AND import_date >= ? AND import_date <= ? AND import_time >= ? AND import_time <= ?'
-            db.query(fab_id_query, [id, req['dateFrom'], req['dateTo'], req['timeFrom'], req['timeTo']], (err, result) => {
+            let fab_id_query = 'SELECT * FROM import_info WHERE fabcat_code = ? AND ((import_date > ? AND import_date < ?) OR (import_date = ? AND import_time >= ?) or (import_date = ? AND import_time <= ?))'
+            db.query(fab_id_query, [id, req['dateFrom'], req['dateTo'], req['dateFrom'], req['timeFrom'],req['dateTo'], req['timeTo']], (err, result) => {
                 if (err) {
                     reject(err);
                 } else {
